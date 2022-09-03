@@ -1,0 +1,24 @@
+HttpResponseModel:
+headers: dicitionary
+files: string[]
+
+string CreateResponse(HttpResponseModel model):
+1-create response headers:
+sample response headers
+    HTTP/1.1 200 OK
+    Content-Encoding: gzip
+    Accept-Ranges: bytes
+    Age: 247555
+    Cache-Control: max-age=604800
+    Content-Type: text/html; charset=UTF-8
+    Date: Sat, 03 Sep 2022 12:34:25 GMT
+    Etag: "3147526947"
+    Expires: Sat, 10 Sep 2022 12:34:25 GMT
+    Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT
+    Server: ECS (dcb/7EC6)
+    Vary: Accept-Encoding
+    X-Cache: HIT
+    Content-Length: 648
+2-create response body:
+    -create the actual html from the files entries
+3-concat them and return it as one string

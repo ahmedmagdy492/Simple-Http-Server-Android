@@ -1,0 +1,28 @@
+HttpServer Class:
+
+void Start():
+1-init socket
+2-bind to all interfaces
+3-start waiting for clients
+4-when a client is connected:
+  -> create new thread: -> {
+    1-read the request and parse it
+    2-talk to the storage to get the entries
+    3-if it's a file -> {
+        read the file content
+        send the content back
+        return (do not continue)
+    }
+    4-create the response
+    5.send the response back
+  }
+5-if isStarted is true:
+    1-goto step 3
+
+void Dispose():
+1-close the server socket
+
+void Stop():
+1-set isStarted to false
+2-call dispose() method
+3-set serverSocket field to NULL

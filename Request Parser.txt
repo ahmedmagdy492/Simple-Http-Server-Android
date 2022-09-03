@@ -1,0 +1,30 @@
+HttpRequestModel:
+headers: []
+queryParams: dicitionary
+routeValues: dicitionary
+body: string
+
+Request Parser:
+
+sample request:
+    GET / HTTP/1.1
+    Host: example.com
+    User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+    Accept-Language: en-US,en;q=0.5
+    Accept-Encoding: gzip, deflate
+    Connection: keep-alive
+    Upgrade-Insecure-Requests: 1
+    Pragma: no-cache
+    Cache-Control: no-cache
+
+HttpRequestModel ParseRequest(string request):
+-create an object of HttpRequestModel
+1-split by \r\n
+2-iterate over the resulted in array:
+ -> split by ':'
+ -> get the value of [0] and get the corresponding field name of the object
+ -> get the value of [1] and store it to the value of the corresponding object
+3-extract the query params (if there are any)
+4-extract the route params (if there are any)
+-return the created object
