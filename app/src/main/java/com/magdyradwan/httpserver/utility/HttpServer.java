@@ -1,11 +1,22 @@
 package com.magdyradwan.httpserver.utility;
 
+import android.content.Context;
 import android.icu.util.Output;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
+
+import com.magdyradwan.httpserver.utility.models.HttpResponseModel;
+import com.magdyradwan.httpserver.utility.models.StatusCodes;
+
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Inet4Address;
@@ -13,50 +24,59 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Dictionary;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class HttpServer {
+public class HttpServer implements Runnable {
     private static boolean isStarted;
     private ServerSocket serverSocket;
     private final int PORT;
+    private final int MAX_THREADS = 64;
+    private final IResponseCreator responseCreator;
+    private final HttpResponseModel httpResponseModel;
+    private static Socket clientSocket;
+
     private static final String TAG = "HttpServer";
+
 
     public HttpServer() {
         isStarted = false;
         serverSocket = null;
         PORT = 45608;
+        httpResponseModel = new HttpResponseModel();
+        responseCreator = new HtmlResponseCreator();
     }
 
-    public void start() throws IOException {
+    private void start() throws IOException {
         serverSocket = new ServerSocket();
+        serverSocket.setReuseAddress(true);
+        serverSocket.setReceiveBufferSize(8192);
         String address = Inet4Address.getByName("0.0.0.0").getHostAddress();
-        serverSocket.bind(new InetSocketAddress(address, PORT));
+        serverSocket.bind(new InetSocketAddress(address, PORT), 20);
         isStarted = true;
+        ExecutorService executorService = Executors.newFixedThreadPool(MAX_THREADS);
 
         while(isStarted) {
-            Socket client = serverSocket.accept();
-            Log.d(TAG, "Http server start: " + client.getRemoteSocketAddress().toString());
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            clientSocket = serverSocket.accept();
+
             executorService.execute(() -> {
                 try {
-                    OutputStream outStream = client.getOutputStream();
-                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outStream);
-                    BufferedWriter writer = new BufferedWriter(outputStreamWriter);
-                    writer.write("HTTP/1.1 200 OK\r\n" +
-                            "Accept-Ranges: bytes\r\n" +
-                            "Age: 247555\r\n" +
-                            "Cache-Control: max-age=604800\r\n" +
-                            "Content-Type: text/html; charset=UTF-8\r\n" +
-                            "Date: Sat, 03 Sep 2022 12:34:25 GMT\r\n" +
-                            "Etag: \"3147526947\"\r\n" +
-                            "Expires: Sat, 10 Sep 2022 12:34:25 GMT\r\n" +
-                            "Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT\r\n" +
-                            "Server: ECS (dcb/7EC6)\r\n" +
-                            "Vary: Accept-Encoding\r\n" +
-                            "Content-Length: 36\r\n\r\n<h1>Hello from the server side</h1>\r\n\r\n");
-                    writer.flush();
-                    writer.close();
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    while((bufferedReader.readLine()) != null) {
+                        httpResponseModel.setFiles(null);
+                        httpResponseModel.setStatusCode(StatusCodes.OK);
+                        Dictionary<String, String> headers = httpResponseModel.getHeaders();
+                        headers.put("ContentType", "text/html; charset=UTF-8");
+                        headers.put("Date", Calendar.getInstance().getTime().toString());
+                        responseCreator.setResponseModel(httpResponseModel);
+                        String response = responseCreator.createResponse();
+                        writeOutputStream(clientSocket.getOutputStream(), response);
+                        //clientSocket.shutdownOutput();
+                    }
                 }
                 catch (IOException e) {
                     e.printStackTrace();
@@ -65,15 +85,33 @@ public class HttpServer {
         }
     }
 
-    public void stop() throws IOException {
-        dispose();
-    }
-
-    private void dispose() throws IOException {
+    public void dispose() throws IOException {
         isStarted = false;
         if(serverSocket != null)
         {
             serverSocket.close();
+        }
+    }
+
+    private void writeOutputStream(OutputStream outStream, String data) throws IOException {
+//        DataOutputStream dataOutputStream = new DataOutputStream(outStream);
+//        dataOutputStream.writeUTF(data);
+//        dataOutputStream.flush();
+//        dataOutputStream.close();
+        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outStream);
+        BufferedWriter writer = new BufferedWriter(outputStreamWriter);
+        writer.write(data);
+        writer.flush();
+        writer.close();
+    }
+
+    @Override
+    public void run() {
+        try {
+            start();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

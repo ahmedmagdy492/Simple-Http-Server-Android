@@ -1,7 +1,9 @@
 package com.magdyradwan.httpserver;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -26,40 +28,20 @@ public class MainActivity extends AppCompatActivity {
         btnServer = findViewById(R.id.btnStart);
 
         btnServer.setOnClickListener(v -> {
-            HttpServer httpServer = new HttpServer();
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
-            executorService.execute(() -> {
-                if(!isStarted)
-                {
-                    try {
-                        isStarted = true;
-                        runOnUiThread(() -> {
-                            Toast.makeText(this, "Server is Started", Toast.LENGTH_SHORT).show();
-                            btnServer.setText("Stop Server");
-                        });
-                        httpServer.start();
-                    }
-                    catch (IOException e) {
-                        isStarted = false;
-                        e.printStackTrace();
-                    }
-                }
-                else {
-                    try {
-                        httpServer.stop();
-                        runOnUiThread(() -> {
-                            Toast.makeText(this, "Server is Stopped", Toast.LENGTH_SHORT).show();
-                            btnServer.setText("Start Server");
-                        });
-                    }
-                    catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    finally {
-                        isStarted = false;
-                    }
-                }
-            });
+            isStarted = !isStarted;
+
+            if(isStarted) {
+                Intent serviceIntent = new Intent(this, HttpListnerService.class);
+                ContextCompat.startForegroundService(this, serviceIntent);
+                Toast.makeText(this, "Server is Started", Toast.LENGTH_SHORT).show();
+                btnServer.setText("Stop Server");
+            }
+            else {
+                Intent serviceIntent = new Intent(this, HttpListnerService.class);
+                stopService(serviceIntent);
+                Toast.makeText(this, "Server is Stopped", Toast.LENGTH_SHORT).show();
+                btnServer.setText("Start Server");
+            }
         });
     }
 }
