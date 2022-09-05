@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.magdyradwan.httpserver.utility.models.HttpRequestModel;
 import com.magdyradwan.httpserver.utility.models.HttpResponseModel;
 import com.magdyradwan.httpserver.utility.models.StatusCodes;
 
@@ -37,6 +38,7 @@ public class HttpServer implements Runnable {
     private final int PORT;
     private final int MAX_THREADS = 64;
     private final IResponseCreator responseCreator;
+    private final RequestParser requestParser;
     private final HttpResponseModel httpResponseModel;
     private static Socket clientSocket;
 
@@ -49,6 +51,7 @@ public class HttpServer implements Runnable {
         PORT = 45608;
         httpResponseModel = new HttpResponseModel();
         responseCreator = new HtmlResponseCreator();
+        requestParser = new RequestParser();
     }
 
     private void start() throws IOException {
@@ -63,6 +66,13 @@ public class HttpServer implements Runnable {
         while(isStarted) {
             clientSocket = serverSocket.accept();
 
+            // parsing the request
+            String request = ConvertUtil.convertInputStreamToString(clientSocket.getInputStream());
+            HttpRequestModel requestObject = requestParser.parseRequest(request);
+
+            // TODO: calling the storage manager to get the right file or the entries
+
+            // handling the request and sending the response
             executorService.execute(() -> {
                 try {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
