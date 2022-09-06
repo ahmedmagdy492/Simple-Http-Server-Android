@@ -1,5 +1,9 @@
 package com.magdyradwan.httpserver.utility;
 
+import android.os.Environment;
+import android.util.Log;
+
+import com.magdyradwan.httpserver.utility.models.FileModel;
 import com.magdyradwan.httpserver.utility.models.HttpResponseModel;
 import com.magdyradwan.httpserver.utility.models.StatusCodes;
 
@@ -20,7 +24,6 @@ public class HtmlResponseCreator implements IResponseCreator {
         if(response == null)
             throw new IllegalArgumentException("Http Response Model cannot be null");
 
-
         Dictionary<String, String> headers = response.getHeaders();
         StringBuilder finalResponse = new StringBuilder("HTTP/1.1 ");
         finalResponse.append(response.getStatusCode()).append("\r\n");
@@ -32,20 +35,23 @@ public class HtmlResponseCreator implements IResponseCreator {
 
         if(!response.getStatusCode().equals(StatusCodes.OK)) {
             finalResponse.append("<h1>").append(response.getStatusCode()).append("</h1>");
+            finalResponse.append("\r\n\r\n");
             return finalResponse.toString();
         }
 
-        if(response.getFiles() != null && response.getFiles().size() > 0)
-        {
-            // TODO: change list of files to be of type FileModel not of type String
-            for(String file : response.getFiles()) {
-                finalResponse.append("<a href=''>").append(file).append("</a>");
+        if(response.getFiles() != null && response.getFiles().size() > 0) {
+            finalResponse.append("<h1>Index Of </h1><ul style='list-style: none;'>");
+            finalResponse.append("<li><a href='..'>..</a></li>");
+            for(FileModel file : response.getFiles()) {
+                finalResponse.append("<li><a href='/?path=")
+                        .append(file.getFullPath())
+                        .append("'>").append(file.getName()).append("</a></li>");
             }
-            //finalResponse.append("\r\n\r\n");
+            finalResponse.append("</ul>\r\n\r\n");
         }
         else {
-            finalResponse.append("<h1>hello from http server</h1>");
-            //finalResponse.append("\r\n\r\n");
+            finalResponse.append("<h1>Index of /</h1><ul style='list-style: none;'><li><a href=\"..\">..</a></li></ul>");
+            finalResponse.append("\r\n\r\n");
         }
 
         return finalResponse.toString();

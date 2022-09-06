@@ -9,7 +9,7 @@ public class HttpResponseModel {
 
     private String statusCode;
     private final Dictionary<String, String> headers;
-    private List<String> files;
+    private List<FileModel> files;
     private boolean isFile;
     private byte[] fileContent;
 
@@ -42,11 +42,11 @@ public class HttpResponseModel {
         this.statusCode = statusCode;
     }
 
-    public List<String> getFiles() {
+    public List<FileModel> getFiles() {
         return files;
     }
 
-    public void setFiles(ArrayList<String> files) {
+    public void setFiles(List<FileModel> files) {
         this.files = files;
     }
 

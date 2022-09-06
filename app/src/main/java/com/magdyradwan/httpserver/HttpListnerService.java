@@ -39,7 +39,7 @@ public class HttpListnerService extends Service {
                 .setContentIntent(pendingIntent)
                 .build();
         ExecutorService executorService = Executors.newSingleThreadExecutor();
-        httpServer = new HttpServer();
+        httpServer = new HttpServer(getApplicationContext());
         executorService.execute(httpServer);
 
 

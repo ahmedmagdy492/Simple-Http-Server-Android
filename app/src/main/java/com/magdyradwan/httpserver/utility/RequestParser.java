@@ -9,7 +9,15 @@ public class RequestParser {
         HttpRequestModel httpRequestModel = new HttpRequestModel();
 
         String[] reqLines = request.split("\r\n");
+
+        if(reqLines.length == 0)
+            return new HttpRequestModel();
+
         String[] httpMetaData = reqLines[0].split(" ");
+
+        if(httpMetaData.length <= 1)
+            return new HttpRequestModel();
+
         httpRequestModel.setMethod(httpMetaData[0]);
 
         // extracting query params
@@ -31,7 +39,9 @@ public class RequestParser {
 
         for(int i = 1; i < length; i++) {
             String[] headerComponent = reqLines[i].split(": ");
-            headers.put(headerComponent[0], headerComponent[1]);
+            if(headerComponent.length == 2) {
+                headers.put(headerComponent[0], headerComponent[1]);
+            }
         }
 
         return httpRequestModel;
