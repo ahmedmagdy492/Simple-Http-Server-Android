@@ -1,6 +1,7 @@
 package com.magdyradwan.httpserver.utility;
 
 import com.magdyradwan.httpserver.utility.models.HttpResponseModel;
+import com.magdyradwan.httpserver.utility.models.StatusCodes;
 
 import java.util.Dictionary;
 
@@ -19,6 +20,7 @@ public class HtmlResponseCreator implements IResponseCreator {
         if(response == null)
             throw new IllegalArgumentException("Http Response Model cannot be null");
 
+
         Dictionary<String, String> headers = response.getHeaders();
         StringBuilder finalResponse = new StringBuilder("HTTP/1.1 ");
         finalResponse.append(response.getStatusCode()).append("\r\n");
@@ -27,6 +29,11 @@ public class HtmlResponseCreator implements IResponseCreator {
                 append("Date: ").
                 append(headers.get("Date")).
                 append("\r\n\r\n");
+
+        if(!response.getStatusCode().equals(StatusCodes.OK)) {
+            finalResponse.append("<h1>").append(response.getStatusCode()).append("</h1>");
+            return finalResponse.toString();
+        }
 
         if(response.getFiles() != null && response.getFiles().size() > 0)
         {

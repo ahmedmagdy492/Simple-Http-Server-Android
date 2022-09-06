@@ -39,7 +39,8 @@ public class HttpServer implements Runnable {
     private final int MAX_THREADS = 64;
     private final IResponseCreator responseCreator;
     private final RequestParser requestParser;
-    private final HttpResponseModel httpResponseModel;
+    private final RequestHandler requestHandler;
+    private HttpResponseModel httpResponseModel;
     private static Socket clientSocket;
 
     private static final String TAG = "HttpServer";
@@ -49,9 +50,9 @@ public class HttpServer implements Runnable {
         isStarted = false;
         serverSocket = null;
         PORT = 45608;
-        httpResponseModel = new HttpResponseModel();
         responseCreator = new HtmlResponseCreator();
         requestParser = new RequestParser();
+        requestHandler = new RequestHandler();
     }
 
     private void start() throws IOException {
@@ -66,15 +67,27 @@ public class HttpServer implements Runnable {
         while(isStarted) {
             clientSocket = serverSocket.accept();
 
-            // parsing the request
-            String request = ConvertUtil.convertInputStreamToString(clientSocket.getInputStream());
-            HttpRequestModel requestObject = requestParser.parseRequest(request);
-
-            // TODO: calling the storage manager to get the right file or the entries
-
             // handling the request and sending the response
             executorService.execute(() -> {
                 try {
+                    // parsing the request
+                    String request = ConvertUtil.convertInputStreamToString(clientSocket.getInputStream());
+                    HttpRequestModel requestObject = requestParser.parseRequest(request);
+
+                    // TODO: calling the storage manager to get the right file or the entries
+                    httpResponseModel = requestHandler.handleRequest(requestObject);
+
+                    if(httpResponseModel.getIsFile()) {
+                        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+
+                        for(int i = 0;i < httpResponseModel.getFileContent().length; i++) {
+                            bufferedWriter.write(httpResponseModel.getFileContent()[i]);
+                        }
+
+                        bufferedWriter.flush();
+                        bufferedWriter.close();
+                    }
+
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     while((bufferedReader.readLine()) != null) {
                         httpResponseModel.setFiles(null);

@@ -13,14 +13,14 @@ public class RequestParser {
         httpRequestModel.setMethod(httpMetaData[0]);
 
         // extracting query params
-        if(httpMetaData[1].split("/?").length == 2) {
-            String queryString = httpMetaData[1].split("/?")[1];
+        if(httpMetaData[1].split("/\\?").length == 2) {
+            String queryString = httpMetaData[1].split("/\\?")[1];
             Dictionary<String, String> queryParams = httpRequestModel.getQueryParams();
             String[] queryComponents = queryString.split("&");
 
             for (String queryComponent : queryComponents) {
-                String paramName = queryComponent.split("=")[0];
-                String value = queryComponent.split("=")[1];
+                String paramName = queryComponent.split("=")[0].toLowerCase();
+                String value = queryComponent.split("=")[1].toLowerCase();
                 queryParams.put(paramName, value);
             }
         }

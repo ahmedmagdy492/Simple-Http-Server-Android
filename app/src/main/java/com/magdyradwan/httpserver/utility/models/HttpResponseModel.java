@@ -10,9 +10,28 @@ public class HttpResponseModel {
     private String statusCode;
     private final Dictionary<String, String> headers;
     private List<String> files;
+    private boolean isFile;
+    private byte[] fileContent;
 
     public HttpResponseModel() {
         headers = new Hashtable<>();
+        isFile = false;
+    }
+
+    public byte[] getFileContent() {
+        return fileContent;
+    }
+
+    public void setFileContent(byte[] fileContent) {
+        this.fileContent = fileContent;
+    }
+
+    public boolean getIsFile() {
+        return isFile;
+    }
+
+    public void setIsFile(boolean isFile) {
+        this.isFile = isFile;
     }
 
     public String getStatusCode() {
