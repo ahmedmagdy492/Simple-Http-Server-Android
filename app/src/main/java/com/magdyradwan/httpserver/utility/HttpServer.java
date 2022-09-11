@@ -17,6 +17,8 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -48,9 +50,18 @@ public class HttpServer implements Runnable {
     private HttpResponseModel httpResponseModel;
     private Socket clientSocket;
     private int blockNo = 1;
+    private RequestReceived requestReceivedEvent;
 
     private static final String TAG = "HttpServer";
 
+    public interface RequestReceived
+    {
+        void invoke(String request);
+    }
+
+    public void subscribeToRequestReceivedEvent(RequestReceived requestReceived) {
+        this.requestReceivedEvent = requestReceived;
+    }
 
     public HttpServer(Context context) {
         this.context = context;
@@ -94,6 +105,9 @@ public class HttpServer implements Runnable {
 
                     while(clientSocket.isConnected()) {
                         String request = new String(buffer, StandardCharsets.UTF_8);
+                        if(requestReceivedEvent != null) {
+                            requestReceivedEvent.invoke(request);
+                        }
                         blockNo = 2;
                         // parsing the request
                         HttpRequestModel requestObject = requestParser.parseRequest(request);
@@ -105,14 +119,19 @@ public class HttpServer implements Runnable {
 
                         if(httpResponseModel.getIsFile()) {
                             blockNo = 5;
-                            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+                            OutputStream clientOutputStream = clientSocket.getOutputStream();
+                            FileInputStream fileInputStream = new FileInputStream(httpResponseModel.getFullPath());
+                            String responseHeaders = "HTTP/1.1 200 OK\r\nContent-Type: " + httpResponseModel.getFileType() +"\r\n\r\n";
+                            int data;
 
-                            for(int i = 0;i < httpResponseModel.getFileContent().length; i++) {
-                                bufferedWriter.write(httpResponseModel.getFileContent()[i]);
+                            clientOutputStream.write(responseHeaders.getBytes(StandardCharsets.UTF_8));
+
+                            while((data = fileInputStream.read()) != -1) {
+                                clientOutputStream.write(data);
                             }
 
-                            bufferedWriter.flush();
-                            bufferedWriter.close();
+                            clientOutputStream.flush();
+                            clientOutputStream.close();
                         }
                         else {
                             blockNo = 6;

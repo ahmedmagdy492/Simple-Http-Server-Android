@@ -11,19 +11,28 @@ public class HttpResponseModel {
     private final Dictionary<String, String> headers;
     private List<FileModel> files;
     private boolean isFile;
-    private byte[] fileContent;
+    private String fileType;
+    private String fullPath;
+
+    public void setFullPath(String fullPath) {
+        this.fullPath = fullPath;
+    }
+
+    public String getFullPath() {
+        return fullPath;
+    }
+
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
+    }
+
+    public String getFileType() {
+        return fileType;
+    }
 
     public HttpResponseModel() {
         headers = new Hashtable<>();
         isFile = false;
-    }
-
-    public byte[] getFileContent() {
-        return fileContent;
-    }
-
-    public void setFileContent(byte[] fileContent) {
-        this.fileContent = fileContent;
     }
 
     public boolean getIsFile() {

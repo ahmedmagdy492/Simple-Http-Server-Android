@@ -1,12 +1,19 @@
 package com.magdyradwan.httpserver;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,8 +30,41 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
 
     private Button btnServer;
+    private TextView drawScreen;
     private boolean isStarted = false;
     private final StringBuilder logStream = new StringBuilder();
+    private ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    isStarted = !isStarted;
+
+                    HttpServer.RequestReceived requestReceivedEvent = request -> {
+                        logStream.append(request);
+                        drawScreen.setText(MainActivity.this.logStream.toString());
+                    };
+
+                    if(isStarted) {
+                        Intent serviceIntent = new Intent(this, HttpListnerService.class);
+                        //serviceIntent.putExtra("data", requestReceivedEvent);
+                        ContextCompat.startForegroundService(this, serviceIntent);
+                        Toast.makeText(this, "Server is Started", Toast.LENGTH_SHORT).show();
+                        logStream.append("Server is Started\n");
+                        logStream.append("Server is Listening on All Interfaces on Port 45608...\n");
+                        btnServer.setText("Stop Server");
+                    }
+                    else {
+                        Intent serviceIntent = new Intent(this, HttpListnerService.class);
+                        stopService(serviceIntent);
+                        Toast.makeText(this, "Server is Stopped", Toast.LENGTH_SHORT).show();
+                        logStream.append("Server is Stopped\n");
+                        btnServer.setText("Start Server");
+                    }
+
+                    drawScreen.setText(logStream.toString());
+                } else {
+                    Toast.makeText(this, "Without Granting Storage Permission the Main Feature of the app to share files is not gonna work", Toast.LENGTH_LONG).show();
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,28 +72,40 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         btnServer = findViewById(R.id.btnStart);
-        TextView drawScreen = findViewById(R.id.log_area);
+        drawScreen = findViewById(R.id.log_area);
 
         btnServer.setOnClickListener(v -> {
-            isStarted = !isStarted;
 
-            if(isStarted) {
-                Intent serviceIntent = new Intent(this, HttpListnerService.class);
-                ContextCompat.startForegroundService(this, serviceIntent);
-                Toast.makeText(this, "Server is Started", Toast.LENGTH_SHORT).show();
-                logStream.append("Server is Started\n");
-                logStream.append("Server is Listening on All Interfaces on Port 45608...\n");
-                btnServer.setText("Stop Server");
-            }
-            else {
-                Intent serviceIntent = new Intent(this, HttpListnerService.class);
-                stopService(serviceIntent);
-                Toast.makeText(this, "Server is Stopped", Toast.LENGTH_SHORT).show();
-                logStream.append("Server is Stopped\n");
-                btnServer.setText("Start Server");
-            }
+            if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                isStarted = !isStarted;
 
-            drawScreen.setText(logStream.toString());
+                HttpServer.RequestReceived requestReceivedEvent = request -> {
+                    logStream.append(request);
+                    drawScreen.setText(MainActivity.this.logStream.toString());
+                };
+
+                if(isStarted) {
+                    Intent serviceIntent = new Intent(this, HttpListnerService.class);
+                    //serviceIntent.putExtra("data", requestReceivedEvent);
+                    ContextCompat.startForegroundService(this, serviceIntent);
+                    Toast.makeText(this, "Server is Started", Toast.LENGTH_SHORT).show();
+                    logStream.append("Server is Started\n");
+                    logStream.append("Server is Listening on All Interfaces on Port 45608...\n");
+                    btnServer.setText("Stop Server");
+                }
+                else {
+                    Intent serviceIntent = new Intent(this, HttpListnerService.class);
+                    stopService(serviceIntent);
+                    Toast.makeText(this, "Server is Stopped", Toast.LENGTH_SHORT).show();
+                    logStream.append("Server is Stopped\n");
+                    btnServer.setText("Start Server");
+                }
+
+                drawScreen.setText(logStream.toString());
+            }
+            else if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
         });
     }
 

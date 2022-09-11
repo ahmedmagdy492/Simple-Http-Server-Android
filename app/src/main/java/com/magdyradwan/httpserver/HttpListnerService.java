@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.widget.Toast;
 
@@ -26,6 +27,7 @@ public class HttpListnerService extends Service {
 
     public static final String CHANNEL_ID = "HttpLisnterService";
     private HttpServer httpServer;
+    private HttpServer.RequestReceived requestReceivedEvent;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

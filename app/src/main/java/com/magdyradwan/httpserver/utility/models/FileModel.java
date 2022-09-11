@@ -4,6 +4,24 @@ public class FileModel {
     private String fullPath;
     private String name;
     private boolean isFile;
+    private String mimeType;
+    private long sizeInBytes;
+
+    public long getSizeInBytes() {
+        return sizeInBytes;
+    }
+
+    public void setSizeInBytes(long sizeInBytes) {
+        this.sizeInBytes = sizeInBytes;
+    }
+
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
+    }
 
     public String getName() {
         return name;
