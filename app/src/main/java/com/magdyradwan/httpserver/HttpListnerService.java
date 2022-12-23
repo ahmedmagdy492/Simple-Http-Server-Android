@@ -27,7 +27,6 @@ public class HttpListnerService extends Service {
 
     public static final String CHANNEL_ID = "HttpLisnterService";
     private HttpServer httpServer;
-    private HttpServer.RequestReceived requestReceivedEvent;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

@@ -84,7 +84,6 @@ public class RequestHandler {
         }
 
         if(!fileUtility.isExist(path)) {
-            Log.d("TAG", "handleRequest: no file found: " + path);
             responseModel.setStatusCode(StatusCodes.NotFound);
             responseModel.setFiles(null);
             return responseModel;

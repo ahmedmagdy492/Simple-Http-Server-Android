@@ -49,6 +49,9 @@ public class StorageReader {
                     fileModel.setMimeType("text/plain");
                 }
             }
+            else {
+                fileModel.setMimeType("text/plain");
+            }
             fileModels.add(fileModel);
         }
 

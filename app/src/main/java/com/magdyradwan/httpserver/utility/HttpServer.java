@@ -1,6 +1,7 @@
 package com.magdyradwan.httpserver.utility;
 
 import android.content.Context;
+import android.content.Intent;
 import android.icu.util.Output;
 import android.os.Environment;
 import android.util.Log;
@@ -50,18 +51,8 @@ public class HttpServer implements Runnable {
     private HttpResponseModel httpResponseModel;
     private Socket clientSocket;
     private int blockNo = 1;
-    private RequestReceived requestReceivedEvent;
 
     private static final String TAG = "HttpServer";
-
-    public interface RequestReceived
-    {
-        void invoke(String request);
-    }
-
-    public void subscribeToRequestReceivedEvent(RequestReceived requestReceived) {
-        this.requestReceivedEvent = requestReceived;
-    }
 
     public HttpServer(Context context) {
         this.context = context;
@@ -105,9 +96,7 @@ public class HttpServer implements Runnable {
 
                     while(clientSocket.isConnected()) {
                         String request = new String(buffer, StandardCharsets.UTF_8);
-                        if(requestReceivedEvent != null) {
-                            requestReceivedEvent.invoke(request);
-                        }
+
                         blockNo = 2;
                         // parsing the request
                         HttpRequestModel requestObject = requestParser.parseRequest(request);
