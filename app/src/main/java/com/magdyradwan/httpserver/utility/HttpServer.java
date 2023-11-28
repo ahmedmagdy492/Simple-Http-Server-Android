@@ -94,43 +94,40 @@ public class HttpServer implements Runnable {
                         Log.d(TAG, "sockettimeout: " + ex.getMessage());
                     }
 
-                    while(clientSocket.isConnected()) {
-                        String request = new String(buffer, StandardCharsets.UTF_8);
+                    String request = new String(buffer, StandardCharsets.UTF_8);
+                    blockNo = 2;
+                    // parsing the request
+                    HttpRequestModel requestObject = requestParser.parseRequest(request);
+                    blockNo = 3;
 
-                        blockNo = 2;
-                        // parsing the request
-                        HttpRequestModel requestObject = requestParser.parseRequest(request);
-                        blockNo = 3;
+                    httpResponseModel = requestHandler
+                            .handleRequest(context, requestObject);
+                    blockNo = 4;
 
-                        httpResponseModel = requestHandler
-                                .handleRequest(context, requestObject);
-                        blockNo = 4;
+                    if(httpResponseModel.getIsFile()) {
+                        blockNo = 5;
+                        OutputStream clientOutputStream = clientSocket.getOutputStream();
+                        FileInputStream fileInputStream = new FileInputStream(httpResponseModel.getFullPath());
+                        String responseHeaders = "HTTP/1.0 200 OK\r\nContent-Type: " + httpResponseModel.getFileType() +"\r\n\r\n";
+                        int data;
 
-                        if(httpResponseModel.getIsFile()) {
-                            blockNo = 5;
-                            OutputStream clientOutputStream = clientSocket.getOutputStream();
-                            FileInputStream fileInputStream = new FileInputStream(httpResponseModel.getFullPath());
-                            String responseHeaders = "HTTP/1.1 200 OK\r\nContent-Type: " + httpResponseModel.getFileType() +"\r\n\r\n";
-                            int data;
+                        clientOutputStream.write(responseHeaders.getBytes(StandardCharsets.UTF_8));
 
-                            clientOutputStream.write(responseHeaders.getBytes(StandardCharsets.UTF_8));
-
-                            while((data = fileInputStream.read()) != -1) {
-                                clientOutputStream.write(data);
-                            }
-
-                            clientOutputStream.flush();
-                            clientOutputStream.close();
+                        while((data = fileInputStream.read()) != -1) {
+                            clientOutputStream.write(data);
                         }
-                        else {
-                            blockNo = 6;
-                            Dictionary<String, String> headers = httpResponseModel.getHeaders();
-                            headers.put("ContentType", "text/html; charset=UTF-8");
-                            headers.put("Date", Calendar.getInstance().getTime().toString());
-                            responseCreator.setResponseModel(httpResponseModel);
-                            String response = responseCreator.createResponse();
-                            writeOutputStream(clientSocket.getOutputStream(), response);
-                        }
+
+                        clientOutputStream.flush();
+                        clientOutputStream.close();
+                    }
+                    else {
+                        blockNo = 6;
+                        Dictionary<String, String> headers = httpResponseModel.getHeaders();
+                        headers.put("ContentType", "text/html; charset=UTF-8");
+                        headers.put("Date", Calendar.getInstance().getTime().toString());
+                        responseCreator.setResponseModel(httpResponseModel);
+                        String response = responseCreator.createResponse();
+                        writeOutputStream(clientSocket.getOutputStream(), response);
                     }
                     inReader.close();
                 }
